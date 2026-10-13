@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>TIB App Registry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: admin console — summary strip, tab bar (Review / Hub map), grouped app rows with inline decisions */
+/* Single TIB look: navy ground, gold accents, maroon actions (from tib-systems.com) */
+:root{
+  --ink:#ffffff; --paper:#0f1c2e; --surface:#16273d; --line:#2a3d58; --muted:#a9b4c4;
+  --gold:#c8a25a; --maroon:#9a2f44; --teal:#4fb3bb;
+  --ok:#5cc49a; --warn:#e3a650; --bad:#ef8a8a; --neutral:#8a96a8;
+  --chip:#22364f; --fg:#d9dee7; --field:#0c1726;
+  --serif:"Source Serif 4",Georgia,serif; --sans:"Manrope",system-ui,-apple-system,Segoe UI,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper) radial-gradient(circle at 100% 0,rgba(200,162,90,.14),transparent 420px) no-repeat;color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;border-top:4px solid var(--gold);min-height:100vh}
+.group h2{background:var(--chip)}
+.tools input,.tools select,.ctl select,.ctl input{background:var(--field)!important}
+.tabs button[aria-selected="true"]{border-bottom-color:var(--gold)!important}
+.name a{color:var(--gold)!important}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:flex;flex-direction:column;gap:18px}
+header .eyebrow{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--gold)}
+h1{font-family:var(--serif);font-size:1.6rem;margin:2px 0 4px;color:var(--ink);text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:68ch}
+#status{font-size:.78rem;color:var(--muted);margin-top:6px}
+#status.err{color:var(--bad)}
+.summary{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;font:inherit;color:inherit;display:flex;flex-direction:column;gap:2px}
+.tile:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.tile b{font-family:var(--serif);font-size:1.5rem;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.1}
+.tile span{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.tile[aria-pressed="true"]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.tile i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tabs button{font:inherit;font-weight:700;background:none;border:0;padding:10px 12px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--maroon)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools input,.tools select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-width:0}
+.tools input{flex:1 1 220px}
+.group{display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.group h2{margin:0;padding:12px 14px;font-family:var(--serif);font-size:1.08rem;color:var(--ink);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.group h2 small{font-family:var(--sans);font-size:.75rem;color:var(--muted);font-weight:600}
+.row{display:grid;grid-template-columns:1fr;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);border-left:4px solid var(--neutral)}
+.row:last-child{border-bottom:0}
+.row[data-d="hub"]{border-left-color:var(--gold)}
+.row[data-d="link"]{border-left-color:var(--ok)}
+.row[data-d="needs"]{border-left-color:var(--warn)}
+.row[data-d="standalone"]{border-left-color:var(--teal)}
+.row[data-d="retire"]{border-left-color:var(--bad)}
+.name{min-width:0;display:flex;flex-direction:column;gap:2px}
+.name code{font-family:var(--mono);font-size:.84rem;color:var(--ink);word-break:break-all}
+.name a{font-size:.75rem;color:var(--teal);word-break:break-all}
+.why{font-size:.78rem;color:var(--muted)}
+.ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.ctl select,.ctl input{font:inherit;font-size:.82rem;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--fg);min-width:0}
+.ctl input{flex:1 1 180px}
+.sug{font-size:.68rem;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.saved{font-size:.68rem;color:var(--ok);font-weight:700}
+.hubmap{display:grid;grid-template-columns:1fr;gap:12px}
+.hubcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.hubcard h3{margin:0;font-family:var(--serif);font-size:1.02rem;color:var(--ink);word-break:break-all}
+.hubcard.pending{border-style:dashed}
+.hubcard ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
+.hubcard li{font-family:var(--mono);font-size:.78rem;color:var(--fg);word-break:break-all}
+.hubcard .empty{color:var(--muted);font-family:var(--sans);font-style:italic}
+.note{font-size:.8rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+@media (min-width:600px){.summary{grid-template-columns:repeat(3,1fr)}.hubmap{grid-template-columns:1fr 1fr}h1{font-size:1.9rem}}
+@media (min-width:880px){.summary{grid-template-columns:repeat(6,1fr)}.row{grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr);align-items:center}.hubmap{grid-template-columns:repeat(3,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">TIB Systems · Internal administration</div>
+  <h1>TIB App Registry</h1>
+  <p>All <span id="appcount">105</span> projects in the Vercel team, grouped by product family. Each row has a suggested decision. Set your own decision, the hub it belongs under, and a note. Changes save automatically.</p>
+  <div id="status">Connecting to saved decisions…</div>
+  <form id="gateform" class="tools" style="margin-top:10px"><div id="gate" class="tools" hidden style="width:100%"><input id="pass" type="password" placeholder="Admin passcode" autocomplete="current-password"><button type="submit" style="font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:8px;background:var(--maroon);color:#fff;cursor:pointer">Unlock</button></div></form>
+</header>
+
+<div class="summary" id="summary"></div>
+
+<div class="tabs" role="tablist">
+  <button role="tab" id="tab-review" aria-selected="true">Review apps</button>
+  <button role="tab" id="tab-map" aria-selected="false">Hub map</button>
+</div>
+
+<section id="view-review" style="display:flex;flex-direction:column;gap:14px">
+  <div class="tools">
+    <input id="q" type="search" placeholder="Search project name">
+    <select id="fgroup" aria-label="Filter by family"></select>
+  </div>
+  <div id="groups" style="display:flex;flex-direction:column;gap:14px"></div>
+</section>
+
+<section id="view-map" hidden style="flex-direction:column;gap:12px">
+  <div class="note">This is the draft structure of the consolidated homepage: each hub with the apps you have linked to it. Apps marked "Needs a homepage" appear under a placeholder until a hub is created for them.</div>
+  <div class="hubmap" id="hubmap"></div>
+</section>
+
+<div class="note">Suggestions come from project names plus one confirmed check: the live tib-systems.com homepage links to no other Vercel app. Links are each project's default <code>.vercel.app</code> address and may differ where a custom domain is set. Decisions are stored in the TIB-training-lms Supabase project.</div>
+</div>
+
+<script>
+const GROUPS={
+ hub:["Homepages and hubs","Entry pages that could sit on the consolidated dashboard"],
+ corvane:["Corvane / Controls 360","Suggested hub: tib-corvane-academy"],
+ cc:["Controls Consulting suite","Suggested hub: controls-consulting-brochure-app"],
+ sox:["SOX live courses","Suggested hub: sox-itgc-live-app-homepage"],
+ grcpro:["GRC Pro","Suggested hub: tib-grcpro-homepage"],
+ grcsec:["GRC Security & Fiori","Suggested hub: grc-security-live-course-homepage"],
+ noaccess:["No-Access track","Suggested hub: homepage-controls-mastery-no-access"],
+ legacy:["Older LMS generation (Jun–Jul)","No clear hub found"],
+ career:["Career and job tools","No hub found"],
+ admin:["Admin and back office","Internal by nature"],
+ tooling:["Production tooling","Video, scene and narration tools"],
+ kabo:["Kabo client apps","Client work, not TIB Academy"]
+};
+const DEC={hub:["Hub / homepage","var(--gold)"],link:["Link to a hub","var(--ok)"],needs:["Needs a homepage","var(--warn)"],standalone:["Standalone","var(--teal)"],retire:["Retire / duplicate","var(--bad)"],undecided:["Undecided","var(--neutral)"]};
+// [name, group, suggested decision, suggested hub, reason]
+const A=[
+["tib-corporate-homepage","hub","hub","","Live at tib-systems.com; links only to its own pages"],
+["tib-corvane-academy","hub","hub","","Merged Corvane academy"],
+["tib-academy","hub","hub","",""],
+["tib-academy-course-portal-grc_sweep-","hub","hub","","Newest project; course portal"],
+["live-course1-2-homepage","hub","hub","",""],
+["sap-testing-course-01-home","hub","hub","",""],
+["sox-itgc-live-app-homepage","hub","hub","",""],
+["sox-itgc-catalog-homepage","hub","hub","",""],
+["grc-security-live-course-homepage","hub","hub","",""],
+["homepage-controls-mastery-no-access","hub","hub","",""],
+["homepage-standalone-audio-video","hub","hub","",""],
+["maste-homepage-free","hub","hub","",""],
+["beyond-the-core-electives-landing","hub","hub","",""],
+["tib-grcpro-homepage","hub","hub","",""],
+["hub-my-courses","hub","hub","",""],
+["tib-controls-marketing-portal","hub","hub","",""],
+["tib-controls-marketing-portal-f8wp","hub","retire","","Looks like a duplicate of tib-controls-marketing-portal"],
+["controls-consulting-brochure-app","hub","hub","",""],
+["grc-security-brochure-app","hub","hub","",""],
+["tib-all-access","hub","hub","",""],
+["tib-path-guide","hub","hub","",""],
+["corvane_leads_controls-lead-academy","corvane","link","tib-corvane-academy",""],
+["corvane_leads_grc_security_lead","corvane","link","tib-corvane-academy",""],
+["corvane_leads_corvane-controls-project","corvane","link","tib-corvane-academy",""],
+["corvane_leads_corvane-controls-project-j39h","corvane","retire","","Looks like a duplicate"],
+["corvane_leads_academy_staff_portal","corvane","standalone","","Staff portal"],
+["corvane_leads_academy-content-admin","corvane","standalone","","Content admin"],
+["academy_leads_interactive_learning","corvane","link","tib-corvane-academy",""],
+["tib_simulation_active_app","corvane","link","tib-corvane-academy",""],
+["controls-consulting-trainee-console","cc","link","controls-consulting-brochure-app",""],
+["controls-consulting-timed-exam","cc","link","controls-consulting-brochure-app",""],
+["controls-consulting-docs-portal","cc","link","controls-consulting-brochure-app",""],
+["controls-consulting-instructor-app","cc","standalone","","Instructor-facing"],
+["controls-consulting-training-app","cc","link","controls-consulting-brochure-app",""],
+["controls-cons-course-1-guide","cc","link","controls-consulting-brochure-app",""],
+["controls-primary-lab-course01","cc","link","controls-consulting-brochure-app",""],
+["controls-mastery-all-courses","cc","link","controls-consulting-brochure-app",""],
+["controls-theory-b1-b10","cc","link","controls-consulting-brochure-app",""],
+["theory-scc-standalone","cc","link","controls-consulting-brochure-app",""],
+["tib-sap-controls-tutor","cc","link","controls-consulting-brochure-app",""],
+["controls-cohort-registration","cc","link","controls-consulting-brochure-app",""],
+["sox-live-job-testing","sox","link","sox-itgc-live-app-homepage",""],
+["sox-live-1-job-testing","sox","link","sox-itgc-live-app-homepage",""],
+["sox-live-2-job-testing","sox","link","sox-itgc-live-app-homepage",""],
+["sox-live-3-job-testing","sox","link","sox-itgc-live-app-homepage",""],
+["sox-live-3-job-testing-m65v","sox","retire","","Looks like a duplicate of sox-live-3"],
+["sox-live-4-job-testing","sox","link","sox-itgc-live-app-homepage",""],
+["sox-live-5-job-testing","sox","link","sox-itgc-live-app-homepage",""],
+["combo-sox-itgc-06","sox","link","sox-itgc-live-app-homepage",""],
+["tib-grcpro-2026","grcpro","link","tib-grcpro-homepage",""],
+["tib-grcpro-ac","grcpro","link","tib-grcpro-homepage",""],
+["tib-grcpro-am","grcpro","link","tib-grcpro-homepage",""],
+["tib-grcpro-pc","grcpro","link","tib-grcpro-homepage",""],
+["tib-grcpro-rm","grcpro","link","tib-grcpro-homepage",""],
+["tib-grcpro-btp","grcpro","link","tib-grcpro-homepage",""],
+["tib-grcpro-sim","grcpro","link","tib-grcpro-homepage",""],
+["tib-grcpro-careers","grcpro","link","tib-grcpro-homepage",""],
+["tib-r02s-security-grc-senior","grcpro","link","tib-grcpro-homepage",""],
+["tib-r02j-security-grc-junior-jh5w","grcpro","link","tib-grcpro-homepage",""],
+["tib-r06s-senior-lms","grcpro","link","tib-grcpro-homepage",""],
+["tib-r06j-qa-junior","grcpro","link","tib-grcpro-homepage",""],
+["grc-security-fiori-student-console","grcsec","link","grc-security-live-course-homepage",""],
+["tib-grc-master-course","grcsec","link","grc-security-live-course-homepage",""],
+["grc2026-delta-static","grcsec","link","grc-security-live-course-homepage",""],
+["controls-analyst-no-access","noaccess","link","homepage-controls-mastery-no-access",""],
+["no-access-sap-screen-capture","noaccess","link","homepage-controls-mastery-no-access",""],
+["noaccess-video-walkthrough","noaccess","link","homepage-controls-mastery-no-access",""],
+["noaccess-video-scene-editor","noaccess","standalone","","Editing tool"],
+["tib-lms-controls","legacy","needs","",""],
+["tib-sim","legacy","needs","",""],
+["tib-scc","legacy","needs","",""],
+["tib-cl","legacy","needs","",""],
+["tib-student-console","legacy","needs","",""],
+["tib-training-library","legacy","needs","",""],
+["tib-training-viewer","legacy","needs","",""],
+["tib-res","legacy","needs","",""],
+["tib-audit","legacy","needs","",""],
+["tib-career-paths","legacy","needs","",""],
+["tib-career-intelligence-library","legacy","needs","",""],
+["the-mind-library","legacy","needs","",""],
+["tib-job-role-access","legacy","needs","",""],
+["sap-grc-job-mkt-auto-refresh","career","needs","",""],
+["job-explorer-uk-europe","career","needs","",""],
+["sap-readiness-tracker","career","needs","",""],
+["tib-sap-skills-on-demand","career","needs","",""],
+["tib-practice","career","needs","",""],
+["tib-sap-training-assistant-mobile","career","needs","",""],
+["tib_training_admin_portal","admin","standalone","",""],
+["homepage-downloads-admin","admin","standalone","",""],
+["tib-enrollment-registry","admin","standalone","",""],
+["tib-enrollment-v2","admin","standalone","",""],
+["enrollment-code","admin","standalone","",""],
+["tib-systemeio-webhook","admin","standalone","","Webhook, no user interface"],
+["tib-golive-trcker","admin","standalone","",""],
+["gmail-todo-extractor","admin","standalone","",""],
+["livedemo-scene-editor","tooling","standalone","",""],
+["livedemo-video-walkthrough","tooling","standalone","",""],
+["grcmanual-scene-editor","tooling","standalone","",""],
+["grcmanual-tutorial-player","tooling","standalone","",""],
+["controls-audit-procedure-videos","tooling","standalone","",""],
+["tib_academy_narration_service","tooling","standalone","","Service, no user interface"],
+["kabo-qa-control-tower","kabo","standalone","",""],
+["kabo-itgest-request-tracker","kabo","standalone","",""],
+["kabo-home-website","kabo","standalone","","Kabo's own site"],
+["tib-todo-manager-chat","admin","standalone","","Added 13 Oct; to-do manager, likely internal"]
+];
+// Built-in list is a fallback only; the live list comes from the database on load.
+const toApp=(name,group,sd,sh,why,url)=>({name,group:GROUPS[group]?group:"admin",sd,sh,why,url:url||(name==="tib-corporate-homepage"?"https://tib-systems.com":"https://"+name.replace(/_/g,"-").replace(/-+$/,"")+".vercel.app")});
+let apps=A.map(r=>toApp(...r));
+let HUBS=apps.filter(a=>a.sd==="hub").map(a=>a.name);
+function setApps(list){
+  if(!list||!list.length)return;
+  apps=list.map(r=>toApp(r.project_name,r.family,r.suggested,r.suggested_hub,r.reason,r.url));
+  HUBS=apps.filter(a=>a.sd==="hub").map(a=>a.name);
+  const c=document.getElementById("appcount");if(c)c.textContent=apps.length;
+}
+let saved={}; let db=null; let filter={q:"",group:"",dec:""};
+const $=s=>document.querySelector(s);
+const eff=a=>{const s=saved[a.name]||{};return {d:s.decision||a.sd,h:(s.hub!==undefined?s.hub:a.sh)||"",note:s.note||"",mine:!!s.decision}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function renderSummary(){
+  const c={};apps.forEach(a=>{const d=eff(a).d;c[d]=(c[d]||0)+1});
+  const reviewed=apps.filter(a=>eff(a).mine).length;
+  $("#summary").innerHTML=Object.keys(DEC).filter(k=>k!=="undecided").map(k=>`<button class="tile" data-dec="${k}" aria-pressed="${filter.dec===k}"><b>${c[k]||0}</b><span><i style="background:${DEC[k][1]}"></i>${DEC[k][0]}</span></button>`).join("")+
+  `<button class="tile" data-dec="" aria-pressed="${filter.dec===""}"><b>${reviewed}/${apps.length}</b><span>Reviewed by you</span></button>`;
+  $("#summary").querySelectorAll(".tile").forEach(t=>t.onclick=()=>{filter.dec=t.dataset.dec===filter.dec?"":t.dataset.dec;renderAll()});
+}
+function rowHTML(a){
+  const e=eff(a);
+  const opts=Object.keys(DEC).filter(k=>k!=="undecided").map(k=>`<option value="${k}"${e.d===k?" selected":""}>${DEC[k][0]}</option>`).join("");
+  const hubOpts=`<option value="">Choose hub…</option>`+HUBS.filter(h=>h!==a.name).map(h=>`<option${e.h===h?" selected":""}>${h}</option>`).join("");
+  return `<div class="row" data-d="${e.d}" data-n="${esc(a.name)}">
+   <div class="name"><code>${esc(a.name)}</code><a href="${a.url}" target="_blank" rel="noopener">${a.url.replace("https://","")}</a>${a.why?`<span class="why">${esc(a.why)}</span>`:""}</div>
+   <div class="ctl">
+    <span class="sug" title="Suggested decision">Suggested: ${DEC[a.sd][0]}</span>
+    <select id="d-${esc(a.name)}" class="dsel" aria-label="Decision for ${esc(a.name)}">${opts}</select>
+    <select id="h-${esc(a.name)}" class="hsel" aria-label="Hub for ${esc(a.name)}" ${e.d==="link"?"":"hidden"}>${hubOpts}</select>
+    <input id="n-${esc(a.name)}" class="nin" placeholder="Note" value="${esc(e.note)}">
+    <span class="saved" hidden>Saved</span>
+   </div></div>`;
+}
+function renderGroups(){
+  const q=filter.q.toLowerCase();
+  let html="";
+  for(const g in GROUPS){
+    if(filter.group&&filter.group!==g)continue;
+    const list=apps.filter(a=>a.group===g&&(!q||a.name.toLowerCase().includes(q))&&(!filter.dec||eff(a).d===filter.dec));
+    if(!list.length)continue;
+    html+=`<div class="group"><h2>${GROUPS[g][0]} <small>${list.length} · ${GROUPS[g][1]}</small></h2>${list.map(rowHTML).join("")}</div>`;
+  }
+  $("#groups").innerHTML=html||`<div class="note">No apps match this filter.</div>`;
+  $("#groups").querySelectorAll(".row").forEach(bindRow);
+}
+function bindRow(r){
+  const n=r.dataset.n, d=r.querySelector(".dsel"), h=r.querySelector(".hsel"), t=r.querySelector(".nin"), ok=r.querySelector(".saved");
+  const save=async()=>{
+    const a=apps.find(x=>x.name===n);
+    const body={decision:d.value,hub:d.value==="link"?h.value:"",note:t.value.trim(),updated:new Date().toISOString()};
+    saved[n]=body; r.dataset.d=body.decision; h.hidden=body.decision!=="link";
+    renderSummary(); renderMap();
+    if(!$("#gate").hidden){setStatus("Enter the passcode first: this change is shown here but not saved.",true);return}
+    try{await db.doc("decisions/"+n).set(body);ok.hidden=false;setTimeout(()=>ok.hidden=true,1500)}
+    catch(e){setStatus("Could not save "+n+": "+(e&&e.message||"unknown error"),true)}
+  };
+  d.onchange=save; h.onchange=save; t.onchange=save;
+}
+function renderMap(){
+  const by={};HUBS.forEach(h=>by[h]=[]);const needs=[];
+  apps.forEach(a=>{const e=eff(a);if(e.d==="link"&&e.h&&by[e.h])by[e.h].push(a.name);if(e.d==="needs")needs.push(a.name)});
+  const live=HUBS.filter(h=>eff(apps.find(a=>a.name===h)).d==="hub");
+  $("#hubmap").innerHTML=live.map(h=>`<div class="hubcard"><h3>${esc(h)}</h3><ul>${by[h].length?by[h].map(n=>`<li>${esc(n)}</li>`).join(""):`<li class="empty">No apps linked yet</li>`}</ul></div>`).join("")+
+   (needs.length?`<div class="hubcard pending"><h3>Homepage to be created</h3><ul>${needs.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`:"");
+}
+function renderAll(){renderSummary();renderGroups();renderMap()}
+function setStatus(m,err){const s=$("#status");s.textContent=m;s.className=err?"err":""}
+
+$("#fgroup").innerHTML=`<option value="">All families</option>`+Object.keys(GROUPS).map(g=>`<option value="${g}">${GROUPS[g][0]}</option>`).join("");
+$("#q").oninput=e=>{filter.q=e.target.value;renderGroups()};
+$("#fgroup").onchange=e=>{filter.group=e.target.value;renderGroups()};
+const tabs=[["#tab-review","#view-review"],["#tab-map","#view-map"]];
+tabs.forEach(([t,v])=>$(t).onclick=()=>tabs.forEach(([t2,v2])=>{const on=t2===t;$(t2).setAttribute("aria-selected",on);$(v2).hidden=!on;$(v2).style.display=on?"flex":"none"}));
+renderAll();
+
+const API="https://blfgwysgekfqhcafofhe.supabase.co/functions/v1/app-registry";
+let KEY="";try{KEY=sessionStorage.getItem("tibRegKey")||""}catch(e){}
+async function api(method,body){
+  const r=await fetch(API,{method,headers:{"content-type":"application/json","x-registry-key":KEY},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw Object.assign(new Error(j.error||("Request failed ("+r.status+")")),{status:r.status});
+  return j;
+}
+db={doc:p=>({set:b=>api("POST",{project_name:p.replace("decisions/",""),...b})})};
+async function load(){
+  try{
+    const j=await api("GET");
+    setApps(j.apps);
+    saved={};(j.decisions||[]).forEach(d=>saved[d.project_name]={decision:d.decision,hub:d.hub,note:d.note});
+    const n=Object.keys(saved).length;
+    $("#gate").hidden=true;
+    setStatus(n?`${n} decision${n>1?"s":""} saved. Changes save automatically.`:"No decisions saved yet. Change any row to start.");
+    renderAll();
+  }catch(e){
+    if(e.status===401){try{sessionStorage.removeItem("tibRegKey")}catch(_){}KEY="";$("#gate").hidden=false;setStatus("Wrong passcode. Enter it again to load and save decisions.",true)}
+    else setStatus("Could not load saved decisions: "+e.message,true);
+  }
+}
+$("#gateform").onsubmit=ev=>{ev.preventDefault();KEY=$("#pass").value.trim();try{sessionStorage.setItem("tibRegKey",KEY)}catch(_){}load()};
+load();
+</script>
+
+</body>
+</html>
