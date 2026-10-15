@@ -80,7 +80,7 @@ header p{margin:0;color:var(--muted);max-width:68ch}
 <header>
   <div class="eyebrow">TIB Systems · Internal administration</div>
   <h1>TIB App Registry</h1>
-  <p>All <span id="appcount">105</span> projects in the Vercel team, grouped by product family. Each row has a suggested decision. Set your own decision, the hub it belongs under, and a note. Changes save automatically.</p>
+  <p>All <span id="appcount">103</span> projects in the Vercel team, grouped by product family. Each row has a suggested decision. Set your own decision, the hub it belongs under, and a note. Changes save automatically.</p>
   <div id="status">Connecting to saved decisions…</div>
   <form id="gateform" class="tools" style="margin-top:10px"><div id="gate" class="tools" hidden style="width:100%"><input id="pass" type="password" placeholder="Admin passcode" autocomplete="current-password"><button type="submit" style="font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:8px;background:var(--maroon);color:#fff;cursor:pointer">Unlock</button></div></form>
 </header>
@@ -220,7 +220,6 @@ const A=[
 ["enrollment-code","admin","standalone","",""],
 ["tib-systemeio-webhook","admin","standalone","","Webhook, no user interface"],
 ["tib-golive-trcker","admin","standalone","",""],
-["gmail-todo-extractor","admin","standalone","",""],
 ["livedemo-scene-editor","tooling","standalone","",""],
 ["livedemo-video-walkthrough","tooling","standalone","",""],
 ["grcmanual-scene-editor","tooling","standalone","",""],
@@ -229,8 +228,7 @@ const A=[
 ["tib_academy_narration_service","tooling","standalone","","Service, no user interface"],
 ["kabo-qa-control-tower","kabo","standalone","",""],
 ["kabo-itgest-request-tracker","kabo","standalone","",""],
-["kabo-home-website","kabo","standalone","","Kabo's own site"],
-["tib-todo-manager-chat","admin","standalone","","Added 13 Oct; to-do manager, likely internal"]
+["kabo-home-website","kabo","standalone","","Kabo's own site"]
 ];
 // Built-in list is a fallback only; the live list comes from the database on load.
 const toApp=(name,group,sd,sh,why,url)=>({name,group:GROUPS[group]?group:"admin",sd,sh,why,url:url||(name==="tib-corporate-homepage"?"https://tib-systems.com":"https://"+name.replace(/_/g,"-").replace(/-+$/,"")+".vercel.app")});
